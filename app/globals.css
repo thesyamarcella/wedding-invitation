@@ -1,26 +1,41 @@
 @import "tailwindcss";
 
+/* THEME COLORS & FONTS */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #3e513c;
+  --text: #ebcdcd;
+  --accent: #b4b49f;
+
+  --font-header: "Playfair Display", serif;
+  --font-body: "Tenor Sans", sans-serif;
+  --font-script: "Parisienne", cursive;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html,
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  scroll-behavior: smooth;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Floating petals animation */
+@keyframes petals {
+  0% {
+    transform: translateY(-10%) rotate(0deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(110vh) rotate(360deg);
+    opacity: 0;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.petal {
+  position: absolute;
+  animation: petals 10s linear infinite;
+  width: 30px;
+  height: 30px;
+  background-size: contain;
+  background-repeat: no-repeat;
 }
