@@ -49,6 +49,9 @@ const DEFAULT_CONFIG: WeddingConfig = {
   bankName: "Bank",
   accountNumber: "1234567890",
   accountName: "Account Name",
+  bankName2: "",
+  accountNumber2: "",
+  accountName2: "",
 };
 
 export default function InvitePage() {
