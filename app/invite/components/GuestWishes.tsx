@@ -10,13 +10,13 @@ type Props = {
 export const GuestWishes = ({ rsvps }: Props) => (
   <section className="w-full max-w-lg mb-20 px-4">
     <h3 className="font-[var(--font-header)] text-3xl text-[var(--accent)] mb-4 text-center">
-      Guest Wishes 💬
+      Guest Wishes ❤︎
     </h3>
 
     <div className="flex flex-col gap-3">
       {rsvps.length === 0 && (
         <p className="text-center text-[var(--text)]/50">
-          No wishes yet — be the first 💕
+          No wishes yet — be the first
         </p>
       )}
 

@@ -105,7 +105,7 @@ export default function InvitePage() {
     const endTimer = setTimeout(() => {
       setIntroFade(true);
       setTimeout(() => setIntroDone(true), 800); // fade duration
-    }, 9000); // 7s total
+    }, 7000); // 7s total
 
     return () => {
       clearTimeout(showBtnTimer);
@@ -325,13 +325,15 @@ export default function InvitePage() {
         <LoopingVideoSection src={config.videos.video2} />
       )}
 
+      <OurStory storyText={config.storyText} />
+
       {config.videos.video3 && (
         <LoopingVideoSection src={config.videos.video3} />
       )}
 
-      <OurStory storyText={config.storyText} />
-      <ScheduleSection config={config} />
       <LocationSection config={config} />
+
+      {/* <ScheduleSection config={config} /> */}
 
       {/* RSVP Box */}
       <section

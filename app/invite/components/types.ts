@@ -32,8 +32,11 @@ export type WeddingConfig = {
   };
   musicUrl: string;
   bankName: string;
+  bankName2: string;
   accountNumber: string;
   accountName: string;
+  accountNumber2: string;
+  accountName2: string;
 };
 
 export type TimeLeft = {
