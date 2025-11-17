@@ -21,7 +21,14 @@ const EventCard = ({
   delay,
 }: EventCardProps) => (
   <motion.div
-    className="bg-[color-mix(in_srgb,var(--bg)_80%,black)] border border-[var(--accent)]/40 rounded-2xl p-5 shadow-lg"
+    className="
+      bg-[color-mix(in_srgb,var(--bg)_90%,white)]
+      border border-[var(--accent)]/30 
+      rounded-2xl 
+      p-5 
+      shadow-[0_0_12px_rgba(180,180,159,0.12)]
+      backdrop-blur-sm
+    "
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
     transition={{ delay }}
@@ -29,11 +36,14 @@ const EventCard = ({
     <p className="font-[var(--font-header)] text-sm tracking-[0.25em] uppercase text-[var(--accent)] mb-2">
       {title}
     </p>
+
     <p className="font-[var(--font-body)] text-[var(--text)] mb-1">{date}</p>
     <p className="font-[var(--font-body)] text-[var(--text)] mb-3">{time}</p>
+
     <p className="font-[var(--font-header)] text-[var(--accent)] mb-1">
       {venue}
     </p>
+
     <p className="text-xs text-[var(--text)]/80">{address}</p>
   </motion.div>
 );
@@ -43,10 +53,18 @@ type Props = {
 };
 
 export const ScheduleSection = ({ config }: Props) => (
-  <section className="w-full py-12 px-6 bg-[color-mix(in_srgb,var(--bg)_65%,black)]">
+  <section
+    className="
+      w-full py-12 px-6 
+      bg-[color-mix(in_srgb,var(--bg)_85%,white)]
+    "
+  >
     <div className="max-w-3xl mx-auto">
       <motion.h2
-        className="font-[var(--font-header)] text-3xl text-[var(--accent)] mb-6 text-center"
+        className="
+          font-[var(--font-header)] text-3xl 
+          text-[var(--accent)] mb-6 text-center
+        "
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
       >
@@ -62,6 +80,7 @@ export const ScheduleSection = ({ config }: Props) => (
           address={config.venueAddress}
           delay={0}
         />
+
         <EventCard
           title="Resepsi"
           date={config.displayDate}

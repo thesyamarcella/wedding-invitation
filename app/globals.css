@@ -2,9 +2,9 @@
 
 /* THEME COLORS & FONTS */
 :root {
-  --bg: #3e513c;
-  --text: #ebcdcd;
-  --accent: #b4b49f;
+  --bg: #f2f1eb;
+  --text: #d897a0;
+  --accent: #708871;
 
   --font-header: "Playfair Display", serif;
   --font-body: "Tenor Sans", sans-serif;

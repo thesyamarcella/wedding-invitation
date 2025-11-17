@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { db } from "@/lib/firebase";
 import {
@@ -15,10 +15,10 @@ import {
   getDoc,
 } from "firebase/firestore";
 
-// Import types
+// Types
 import { Rsvp, WeddingConfig, TimeLeft } from "../components/types";
 
-// Import components
+// Components
 import { LoopingVideoSection } from "../components/LoopingVideoSection";
 import { EnvelopeOverlay } from "../components/EnvelopeOverlay";
 import { HeroSection } from "../components/HeroSection";
@@ -31,7 +31,6 @@ import { WeddingGift } from "../components/WeddingGift";
 import { GuestWishes } from "../components/GuestWishes";
 import { OpeningOverlay } from "../components/OpeningOverlay";
 
-// Default config fallback
 const DEFAULT_CONFIG: WeddingConfig = {
   groomName: "Groom",
   brideName: "Bride",
@@ -45,30 +44,34 @@ const DEFAULT_CONFIG: WeddingConfig = {
   mapsUrl: "https://maps.google.com",
   mapsEmbedUrl: "https://www.google.com/maps/embed",
   storyText: "Our love story...",
-  heroImageUrl: "/canva-bg.jpg",
+  heroImageUrl: "/hero.jpg",
   videos: {},
-  musicUrl: "/music.mp3",
+  musicUrl: "/music.m4a",
   bankName: "Bank",
   accountNumber: "1234567890",
   accountName: "Account Name",
 };
 
 export default function InvitePage() {
+  const router = useRouter();
   const { guest } = useParams();
-  const decodedSlug = decodeURIComponent(String(guest || ""));
-  const prefilledName = decodedSlug.replace(/-/g, " ");
+  const guestSlug = String(guest);
 
-  // State
   const [config, setConfig] = useState<WeddingConfig>(DEFAULT_CONFIG);
   const [configLoading, setConfigLoading] = useState(true);
-  const [name, setName] = useState(prefilledName);
+
+  const [guestName, setGuestName] = useState<string>("");
+  const [guestLoading, setGuestLoading] = useState(true);
+
   const [willAttend, setWillAttend] = useState<"yes" | "no">("yes");
   const [comment, setComment] = useState("");
   const [sent, setSent] = useState(false);
+
   const [rsvps, setRsvps] = useState<Rsvp[]>([]);
   const [opened, setOpened] = useState(false);
   const [showEnvelope, setShowEnvelope] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
     days: 0,
     hours: 0,
@@ -78,9 +81,8 @@ export default function InvitePage() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Use window scroll instead of ref for better hydration
+  // Scroll animations
   const { scrollYProgress } = useScroll();
-
   const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -80]);
 
   const dustParticles = useMemo(
@@ -94,43 +96,46 @@ export default function InvitePage() {
     []
   );
 
-  // Fetch config from Firestore
+  // 🚀 1. VALIDATE GUEST + LOAD GUEST NAME
   useEffect(() => {
-    const fetchConfig = async () => {
-      try {
-        const docRef = doc(db, "config", "wedding");
-        const docSnap = await getDoc(docRef);
+    async function loadGuest() {
+      const ref = doc(db, "guests", guestSlug);
+      const snap = await getDoc(ref);
 
-        if (docSnap.exists()) {
-          setConfig(docSnap.data() as WeddingConfig);
-        }
-      } catch (error) {
-        console.error("Error fetching config:", error);
-      } finally {
-        setConfigLoading(false);
+      if (!snap.exists()) {
+        router.push("/not-found");
+        return;
       }
-    };
 
-    fetchConfig();
+      setGuestName(snap.data().name);
+      setGuestLoading(false);
+    }
+    loadGuest();
+  }, [guestSlug, router]);
+
+  // 🚀 2. LOAD CONFIG
+  useEffect(() => {
+    async function loadConfig() {
+      const ref = doc(db, "config", "wedding");
+      const snap = await getDoc(ref);
+      if (snap.exists()) setConfig(snap.data() as WeddingConfig);
+      setConfigLoading(false);
+    }
+    loadConfig();
   }, []);
 
-  // Countdown timer
+  // 🚀 3. COUNTDOWN
   useEffect(() => {
     const target = new Date(config.weddingDate).getTime();
 
     const tick = () => {
-      const now = Date.now();
-      const diff = target - now;
-
-      if (diff <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
+      const diff = target - Date.now();
+      if (diff <= 0) return;
 
       setTimeLeft({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        days: Math.floor(diff / 86400000),
+        hours: Math.floor((diff / 3600000) % 24),
+        minutes: Math.floor((diff / 60000) % 60),
         seconds: Math.floor((diff / 1000) % 60),
       });
     };
@@ -140,16 +145,21 @@ export default function InvitePage() {
     return () => clearInterval(interval);
   }, [config.weddingDate]);
 
-  // Fetch RSVPs
+  // 🚀 4. LOAD RSVP FOR THIS GUEST ONLY
   useEffect(() => {
-    const q = query(collection(db, "rsvp"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map((doc) => doc.data() as Rsvp);
-      setRsvps(data);
-    });
-    return () => unsub();
-  }, []);
+    const q = query(
+      collection(db, "rsvp", guestSlug, "responses"),
+      orderBy("createdAt", "desc")
+    );
 
+    const unsub = onSnapshot(q, (snap) => {
+      setRsvps(snap.docs.map((d) => d.data() as Rsvp));
+    });
+
+    return () => unsub();
+  }, [guestSlug]);
+
+  // 🚀 5. PLAY MUSIC + OPENING OVERLAY
   const handleOpenInvitation = () => {
     setOpened(true);
     setShowEnvelope(true);
@@ -160,46 +170,43 @@ export default function InvitePage() {
     setIsPlaying(true);
     audio.volume = 0;
 
-    audio
-      .play()
-      .then(() => {
-        let v = 0;
-        const fade = setInterval(() => {
-          if (v < 0.8) {
-            v += 0.05;
-            audio.volume = v;
-          } else clearInterval(fade);
-        }, 150);
-      })
-      .catch(() => {});
+    audio.play().then(() => {
+      let v = 0;
+      const fade = setInterval(() => {
+        if (v < 0.8) {
+          v += 0.04;
+          audio.volume = v;
+        } else clearInterval(fade);
+      }, 130);
+    });
   };
 
   const toggleMusic = () => {
     if (!audioRef.current) return;
-
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(() => {});
+      audioRef.current.play();
       setIsPlaying(true);
     }
   };
 
+  // 🚀 6. SUBMIT RSVP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!guestName) return;
 
     try {
-      await addDoc(collection(db, "rsvp"), {
-        name,
+      await addDoc(collection(db, "rsvp", guestSlug, "responses"), {
+        name: guestName,
         willAttend,
         comment,
         createdAt: serverTimestamp(),
       });
       setSent(true);
     } catch (err) {
-      console.error("Error submitting RSVP:", err);
+      console.error(err);
     }
   };
 
@@ -209,29 +216,29 @@ export default function InvitePage() {
     timeLeft.minutes === 0 &&
     timeLeft.seconds === 0;
 
-  if (configLoading) {
+  if (guestLoading || configLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[var(--accent)]/30 border-t-[var(--accent)] rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[var(--text)]">Loading invitation...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
+        <div className="text-center text-[var(--text)]">
+          Loading invitation...
         </div>
       </div>
     );
   }
 
   return (
-    <main className="relative min-h-screen flex flex-col items-center overflow-hidden bg-[var(--bg)]">
+    <main className="relative min-h-screen flex flex-col items-center bg-[var(--bg)] overflow-hidden">
+      {/* Music button */}
       <button
         onClick={toggleMusic}
-        className="fixed bottom-4 right-4 z-40 bg-[var(--accent)]/90 text-[var(--bg)] px-5 py-2 rounded-full font-[var(--font-header)] shadow-lg hover:opacity-90"
+        className="fixed bottom-4 right-4 z-40 bg-[var(--accent)] text-[var(--bg)] px-5 py-2 rounded-full shadow-lg"
       >
         {isPlaying ? "Pause Music" : "Play Music"}
       </button>
 
       <OpeningOverlay
         opened={opened}
-        prefilledName={prefilledName}
+        prefilledName={guestName}
         onOpen={handleOpenInvitation}
         config={config}
       />
@@ -239,7 +246,7 @@ export default function InvitePage() {
       <EnvelopeOverlay show={showEnvelope} videoUrl={config.videos.envelope} />
 
       <HeroSection
-        prefilledName={prefilledName}
+        prefilledName={guestName}
         heroY={heroY}
         dustParticles={dustParticles}
         timeLeft={timeLeft}
@@ -251,7 +258,11 @@ export default function InvitePage() {
         <LoopingVideoSection src={config.videos.video1} />
       )}
 
-      <CoupleSection config={config} />
+      {/* <CoupleSection config={config} /> */}
+
+      {config.videos.video2 && (
+        <LoopingVideoSection src={config.videos.video2} />
+      )}
 
       {config.videos.video3 && (
         <LoopingVideoSection src={config.videos.video3} />
@@ -261,10 +272,23 @@ export default function InvitePage() {
       <ScheduleSection config={config} />
       <LocationSection config={config} />
 
-      <section className="bg-[color-mix(in_srgb,var(--bg)_75%,black)] border border-[var(--accent)]/35 rounded-2xl shadow-xl w-[90%] max-w-lg mt-16 mb-10 p-6 text-center">
+      {/* RSVP Box */}
+      <section
+        className="
+        bg-[color-mix(in_srgb,var(--bg)_92%,white)]
+        border border-[var(--accent)]/25
+        rounded-2xl 
+        shadow-[0_0_14px_rgba(180,180,159,0.15)]
+        backdrop-blur-sm
+        w-[90%] max-w-lg 
+        mt-16 mb-10 
+        p-6 
+        text-center
+      "
+      >
         <RsvpForm
-          name={name}
-          setName={setName}
+          name={guestName}
+          setName={() => {}}
           willAttend={willAttend}
           setWillAttend={setWillAttend}
           comment={comment}
@@ -275,6 +299,7 @@ export default function InvitePage() {
       </section>
 
       <WeddingGift config={config} />
+
       <GuestWishes rsvps={rsvps} />
 
       <audio ref={audioRef} loop>

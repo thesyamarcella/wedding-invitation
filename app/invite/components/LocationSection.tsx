@@ -27,7 +27,16 @@ export const LocationSection = ({ config }: Props) => {
           {config.venueName} · {config.city}
         </motion.p>
 
-        <div className="bg-[color-mix(in_srgb,var(--bg)_80%,black)] border border-[var(--accent)]/30 rounded-2xl overflow-hidden shadow-lg">
+        <div
+          className="
+            bg-[color-mix(in_srgb,var(--bg)_92%,white)]
+            border border-[var(--accent)]/25
+            rounded-2xl 
+            overflow-hidden 
+            shadow-[0_0_14px_rgba(180,180,159,0.12)]
+            backdrop-blur-sm
+          "
+        >
           <div className="aspect-[4/3] w-full">
             <iframe
               src={config.mapsEmbedUrl}
@@ -41,7 +50,18 @@ export const LocationSection = ({ config }: Props) => {
               href={config.mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block bg-[var(--accent)] text-[var(--bg)] px-5 py-2 rounded-full font-[var(--font-header)] text-sm hover:opacity-90"
+              className="
+                inline-block 
+                bg-[var(--accent)] 
+                text-[var(--bg)] 
+                px-5 py-2 
+                rounded-full 
+                font-[var(--font-header)] 
+                text-sm 
+                shadow-[0_0_10px_rgba(120,136,113,0.25)]
+                hover:opacity-90
+                transition
+              "
             >
               Open in Google Maps
             </a>

@@ -9,6 +9,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import GuestList from "./GuestList";
 
 type WeddingConfig = {
   groomName: string;
@@ -66,7 +67,7 @@ const defaultConfig: WeddingConfig = {
     video2: "/thesya-lana.mp4",
     video3: "/date.mp4",
   },
-  musicUrl: "/music.mp3",
+  musicUrl: "/music.m4a",
   bankName: "BCA",
   accountNumber: "7370463888",
   accountName: "Thesya Marcella",
@@ -601,7 +602,7 @@ export default function AdminPage() {
                     value={config.musicUrl}
                     onChange={(e) => updateConfig("musicUrl", e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    placeholder="/music.mp3"
+                    placeholder="/music.m4a"
                     required
                   />
                 </div>
@@ -670,6 +671,7 @@ export default function AdminPage() {
               </button>
             </div>
           </form>
+          <GuestList />
         </div>
       </div>
     </div>

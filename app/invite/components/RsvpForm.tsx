@@ -23,7 +23,7 @@ export const RsvpForm = ({
 }: Props) => {
   if (sent) {
     return (
-      <div>
+      <div className="text-center">
         <h3 className="font-[var(--font-header)] text-2xl text-[var(--accent)] mb-2">
           Thank you 💖
         </h3>
@@ -36,51 +36,108 @@ export const RsvpForm = ({
 
   return (
     <>
-      <h3 className="font-[var(--font-header)] text-3xl text-[var(--accent)] mb-3">
+      <h3 className="font-[var(--font-header)] text-3xl text-[var(--accent)] mb-3 text-center">
         RSVP 💌
       </h3>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-3 text-left">
+      <form onSubmit={onSubmit} className="flex flex-col gap-4 text-left">
+        {/* Name */}
         <div>
-          <label className="block text-sm mb-1 text-[var(--text)]/80">
+          <label className="block text-sm mb-1 text-[var(--text)]/75">
             Name
           </label>
           <input
-            className="w-full border border-[var(--accent)]/40 rounded-lg bg-[var(--bg)] px-3 py-2 text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
+            className="
+              w-full border border-[var(--accent)]/30 
+              rounded-lg 
+              bg-[color-mix(in_srgb,var(--bg)_90%,white)]
+              px-3 py-2 
+              text-[var(--text)] 
+              focus:border-[var(--accent)]
+              focus:ring-2 focus:ring-[var(--accent)]/20
+              focus:outline-none
+            "
             value={name}
             onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
           />
         </div>
 
+        {/* Will Attend */}
         <div>
-          <label className="block text-sm mb-1 text-[var(--text)]/80">
+          <label className="block text-sm mb-2 text-[var(--text)]/75">
             Will you attend?
           </label>
-          <select
-            className="w-full border border-[var(--accent)]/40 rounded-lg bg-[var(--bg)] px-3 py-2 text-[var(--text)]"
-            value={willAttend}
-            onChange={(e) => setWillAttend(e.target.value as "yes" | "no")}
-          >
-            <option value="yes">Yes, I will attend 💒</option>
-            <option value="no">Sorry, I can't attend 😢</option>
-          </select>
+
+          <div className="flex gap-3">
+            {/* YES */}
+            <button
+              type="button"
+              onClick={() => setWillAttend("yes")}
+              className={`
+                flex-1 py-3 rounded-lg font-[var(--font-header)] border transition
+                ${
+                  willAttend === "yes"
+                    ? "bg-[var(--accent)] text-[var(--bg)] border-[var(--accent)] shadow-[0_0_10px_rgba(120,136,113,0.25)]"
+                    : "bg-[color-mix(in_srgb,var(--bg)_95%,white)] text-[var(--text)] border-[var(--accent)]/30"
+                }
+              `}
+            >
+              Yes 💒
+            </button>
+
+            {/* NO */}
+            <button
+              type="button"
+              onClick={() => setWillAttend("no")}
+              className={`
+                flex-1 py-3 rounded-lg font-[var(--font-header)] border transition
+                ${
+                  willAttend === "no"
+                    ? "bg-[var(--accent)] text-[var(--bg)] border-[var(--accent)] shadow-[0_0_10px_rgba(120,136,113,0.25)]"
+                    : "bg-[color-mix(in_srgb,var(--bg)_95%,white)] text-[var(--text)] border-[var(--accent)]/30"
+                }
+              `}
+            >
+              No 😢
+            </button>
+          </div>
         </div>
 
+        {/* Wishes */}
         <div>
-          <label className="block text-sm mb-1 text-[var(--text)]/80">
+          <label className="block text-sm mb-1 text-[var(--text)]/75">
             Message / Wishes
           </label>
           <textarea
-            className="w-full border border-[var(--accent)]/40 rounded-lg bg-[var(--bg)] px-3 py-2 text-[var(--text)] min-h-[80px]"
+            className="
+              w-full border border-[var(--accent)]/30 rounded-lg
+              bg-[color-mix(in_srgb,var(--bg)_90%,white)]
+              px-3 py-2 text-[var(--text)]
+              min-h-[80px]
+              focus:border-[var(--accent)]
+              focus:ring-2 focus:ring-[var(--accent)]/20
+              focus:outline-none
+            "
             value={comment}
             placeholder="Write your wishes..."
             onChange={(e) => setComment(e.target.value)}
           />
         </div>
 
+        {/* Submit */}
         <button
           type="submit"
-          className="mt-2 w-full bg-[var(--accent)] text-[var(--bg)] py-3 rounded-full font-[var(--font-header)] hover:opacity-90"
+          className="
+            mt-2 w-full 
+            bg-[var(--accent)] 
+            text-[var(--bg)] 
+            py-3 rounded-full 
+            font-[var(--font-header)] 
+            shadow-[0_0_12px_rgba(120,136,113,0.25)]
+            hover:opacity-90
+            transition
+          "
         >
           Send RSVP
         </button>
