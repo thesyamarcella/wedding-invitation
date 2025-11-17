@@ -83,7 +83,7 @@ export const RsvpForm = ({
                 }
               `}
             >
-              Yes 💒
+              Yes ☻
             </button>
 
             {/* NO */}
@@ -99,7 +99,7 @@ export const RsvpForm = ({
                 }
               `}
             >
-              No 😢
+              No ☹
             </button>
           </div>
         </div>

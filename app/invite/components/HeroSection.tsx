@@ -54,11 +54,6 @@ export const HeroSection = ({
         />
       ))}
 
-      {/* Floral Lottie */}
-      <div className="absolute bottom-10 left-6 w-28 opacity-80">
-        <Lottie animationData={floralAnimation} loop autoplay />
-      </div>
-
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
         {/* Names */}

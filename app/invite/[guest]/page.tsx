@@ -23,7 +23,6 @@ import { LoopingVideoSection } from "../components/LoopingVideoSection";
 import { EnvelopeOverlay } from "../components/EnvelopeOverlay";
 import { HeroSection } from "../components/HeroSection";
 import { OurStory } from "../components/OurStory";
-import { CoupleSection } from "../components/CoupleSection";
 import { ScheduleSection } from "../components/ScheduleSection";
 import { LocationSection } from "../components/LocationSection";
 import { RsvpForm } from "../components/RsvpForm";
@@ -96,35 +95,52 @@ export default function InvitePage() {
     []
   );
 
-  // 🚀 1. VALIDATE GUEST + LOAD GUEST NAME
+  // INTRO VIDEO STATE
+  const [introDone, setIntroDone] = useState(false);
+  const [introFade, setIntroFade] = useState(false);
+  const [showButton, setShowButton] = useState(false);
+
+  useEffect(() => {
+    const showBtnTimer = setTimeout(() => setShowButton(true), 3000); // 3s
+    const endTimer = setTimeout(() => {
+      setIntroFade(true);
+      setTimeout(() => setIntroDone(true), 800); // fade duration
+    }, 9000); // 7s total
+
+    return () => {
+      clearTimeout(showBtnTimer);
+      clearTimeout(endTimer);
+    };
+  }, []);
+
+  // 1. LOAD GUEST
   useEffect(() => {
     async function loadGuest() {
       const ref = doc(db, "guests", guestSlug);
       const snap = await getDoc(ref);
-
       if (!snap.exists()) {
         router.push("/not-found");
         return;
       }
-
       setGuestName(snap.data().name);
       setGuestLoading(false);
     }
     loadGuest();
   }, [guestSlug, router]);
 
-  // 🚀 2. LOAD CONFIG
+  // 2. LOAD CONFIG
   useEffect(() => {
     async function loadConfig() {
       const ref = doc(db, "config", "wedding");
       const snap = await getDoc(ref);
+
       if (snap.exists()) setConfig(snap.data() as WeddingConfig);
       setConfigLoading(false);
     }
     loadConfig();
   }, []);
 
-  // 🚀 3. COUNTDOWN
+  // 3. COUNTDOWN
   useEffect(() => {
     const target = new Date(config.weddingDate).getTime();
 
@@ -145,7 +161,7 @@ export default function InvitePage() {
     return () => clearInterval(interval);
   }, [config.weddingDate]);
 
-  // 🚀 4. LOAD RSVP FOR THIS GUEST ONLY
+  // 4. LOAD RSVPS
   useEffect(() => {
     const q = query(
       collection(db, "rsvp", guestSlug, "responses"),
@@ -159,7 +175,7 @@ export default function InvitePage() {
     return () => unsub();
   }, [guestSlug]);
 
-  // 🚀 5. PLAY MUSIC + OPENING OVERLAY
+  // 5. PLAY MUSIC WHEN OPENING INVITATION
   const handleOpenInvitation = () => {
     setOpened(true);
     setShowEnvelope(true);
@@ -181,6 +197,7 @@ export default function InvitePage() {
     });
   };
 
+  // Toggle Music
   const toggleMusic = () => {
     if (!audioRef.current) return;
     if (isPlaying) {
@@ -192,7 +209,7 @@ export default function InvitePage() {
     }
   };
 
-  // 🚀 6. SUBMIT RSVP
+  // 6. SUBMIT RSVP
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!guestName) return;
@@ -228,20 +245,66 @@ export default function InvitePage() {
 
   return (
     <main className="relative min-h-screen flex flex-col items-center bg-[var(--bg)] overflow-hidden">
-      {/* Music button */}
+      {/* 🎥 INTRO VIDEO WITH FADE OUT */}
+      {/* 🎥 INTRO VIDEO WITH 3s BUTTON DELAY + 7s FADE OUT */}
+      {!introDone && (
+        <motion.div
+          animate={{ opacity: introFade ? 0 : 1 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+          className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center"
+        >
+          <video
+            src="/invitation.mp4"
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          />
+
+          {showButton && (
+            <button
+              onClick={() => {
+                setIntroFade(true);
+                setTimeout(() => setIntroDone(true), 800);
+              }}
+              className="
+                absolute bottom-10
+                bg-white/90 text-black 
+                px-8 py-4 rounded-full 
+                font-[var(--font-header)]
+                shadow-lg
+                hover:opacity-90
+                transition
+                text-center
+              "
+            >
+              <span className="block">
+                Dear <span className="capitalize">{guestName}</span>,
+              </span>
+              <span className="block">we are delighted to invite you</span>
+              <span className="block mb-1">to our wedding day.</span>
+            </button>
+          )}
+        </motion.div>
+      )}
+
+      {/* OPENING OVERLAY (only after intro)
+      {introDone && (
+        <OpeningOverlay
+          opened={opened}
+          prefilledName={guestName}
+          onOpen={handleOpenInvitation}
+          config={config}
+        />
+      )} */}
+
+      {/* MUSIC TOGGLE */}
       <button
         onClick={toggleMusic}
         className="fixed bottom-4 right-4 z-40 bg-[var(--accent)] text-[var(--bg)] px-5 py-2 rounded-full shadow-lg"
       >
         {isPlaying ? "Pause Music" : "Play Music"}
       </button>
-
-      <OpeningOverlay
-        opened={opened}
-        prefilledName={guestName}
-        onOpen={handleOpenInvitation}
-        config={config}
-      />
 
       <EnvelopeOverlay show={showEnvelope} videoUrl={config.videos.envelope} />
 
@@ -258,8 +321,6 @@ export default function InvitePage() {
         <LoopingVideoSection src={config.videos.video1} />
       )}
 
-      {/* <CoupleSection config={config} /> */}
-
       {config.videos.video2 && (
         <LoopingVideoSection src={config.videos.video2} />
       )}
@@ -275,16 +336,16 @@ export default function InvitePage() {
       {/* RSVP Box */}
       <section
         className="
-        bg-[color-mix(in_srgb,var(--bg)_92%,white)]
-        border border-[var(--accent)]/25
-        rounded-2xl 
-        shadow-[0_0_14px_rgba(180,180,159,0.15)]
-        backdrop-blur-sm
-        w-[90%] max-w-lg 
-        mt-16 mb-10 
-        p-6 
-        text-center
-      "
+          bg-[color-mix(in_srgb,var(--bg)_92%,white)]
+          border border-[var(--accent)]/25
+          rounded-2xl 
+          shadow-[0_0_14px_rgba(180,180,159,0.15)]
+          backdrop-blur-sm
+          w-[90%] max-w-lg 
+          mt-16 mb-10 
+          p-6 
+          text-center
+        "
       >
         <RsvpForm
           name={guestName}
@@ -299,7 +360,6 @@ export default function InvitePage() {
       </section>
 
       <WeddingGift config={config} />
-
       <GuestWishes rsvps={rsvps} />
 
       <audio ref={audioRef} loop>
