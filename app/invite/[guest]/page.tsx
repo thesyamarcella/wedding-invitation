@@ -63,6 +63,7 @@ export default function InvitePage() {
   const [configLoading, setConfigLoading] = useState(true);
 
   const [guestName, setGuestName] = useState<string>("");
+  const [isFamily, setIsFamily] = useState<boolean>(false); // NEW: Track if guest is family
   const [guestLoading, setGuestLoading] = useState(true);
 
   const [willAttend, setWillAttend] = useState<"yes" | "no">("yes");
@@ -107,7 +108,11 @@ export default function InvitePage() {
     const showBtnTimer = setTimeout(() => setShowButton(true), 3000); // 3s
     const endTimer = setTimeout(() => {
       setIntroFade(true);
-      setTimeout(() => setIntroDone(true), 800); // fade duration
+      setTimeout(() => {
+        setIntroDone(true);
+        // AUTO-PLAY SOUND AFTER INTRO VIDEO
+        autoPlaySound();
+      }, 800); // fade duration
     }, 7000); // 7s total
 
     return () => {
@@ -115,6 +120,31 @@ export default function InvitePage() {
       clearTimeout(endTimer);
     };
   }, []);
+
+  // NEW: Auto-play sound function
+  const autoPlaySound = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    setIsPlaying(true);
+    audio.volume = 0;
+
+    audio
+      .play()
+      .then(() => {
+        let v = 0;
+        const fade = setInterval(() => {
+          if (v < 0.8) {
+            v += 0.04;
+            audio.volume = v;
+          } else clearInterval(fade);
+        }, 130);
+      })
+      .catch((err) => {
+        console.log("Auto-play blocked by browser:", err);
+        setIsPlaying(false);
+      });
+  };
 
   // 1. LOAD GUEST
   useEffect(() => {
@@ -125,7 +155,9 @@ export default function InvitePage() {
         router.push("/not-found");
         return;
       }
-      setGuestName(snap.data().name);
+      const guestData = snap.data();
+      setGuestName(guestData.name);
+      setIsFamily(guestData.isFamily || false); // NEW: Get isFamily flag
       setGuestLoading(false);
     }
     loadGuest();
@@ -178,7 +210,7 @@ export default function InvitePage() {
     return () => unsub();
   }, [guestSlug]);
 
-  // 5. PLAY MUSIC WHEN OPENING INVITATION
+  // 5. PLAY MUSIC WHEN OPENING INVITATION (kept for manual open if needed)
   const handleOpenInvitation = () => {
     setOpened(true);
     setShowEnvelope(true);
@@ -249,7 +281,6 @@ export default function InvitePage() {
   return (
     <main className="relative min-h-screen flex flex-col items-center bg-[var(--bg)] overflow-hidden">
       {/* 🎥 INTRO VIDEO WITH FADE OUT */}
-      {/* 🎥 INTRO VIDEO WITH 3s BUTTON DELAY + 7s FADE OUT */}
       {!introDone && (
         <motion.div
           animate={{ opacity: introFade ? 0 : 1 }}
@@ -268,7 +299,10 @@ export default function InvitePage() {
             <button
               onClick={() => {
                 setIntroFade(true);
-                setTimeout(() => setIntroDone(true), 800);
+                setTimeout(() => {
+                  setIntroDone(true);
+                  autoPlaySound(); // Also auto-play when button clicked
+                }, 800);
               }}
               className="
                 absolute bottom-10
@@ -290,16 +324,6 @@ export default function InvitePage() {
           )}
         </motion.div>
       )}
-
-      {/* OPENING OVERLAY (only after intro)
-      {introDone && (
-        <OpeningOverlay
-          opened={opened}
-          prefilledName={guestName}
-          onOpen={handleOpenInvitation}
-          config={config}
-        />
-      )} */}
 
       {/* MUSIC TOGGLE */}
       <button
@@ -336,8 +360,6 @@ export default function InvitePage() {
 
       <LocationSection config={config} />
 
-      {/* <ScheduleSection config={config} /> */}
-
       {/* RSVP Box */}
       <section
         className="
@@ -364,7 +386,9 @@ export default function InvitePage() {
         />
       </section>
 
-      <WeddingGift config={config} />
+      {/* WEDDING GIFT - Only show if guest is NOT family */}
+      {!isFamily && <WeddingGift config={config} />}
+
       <GuestWishes rsvps={rsvps} />
 
       <audio ref={audioRef} loop>
