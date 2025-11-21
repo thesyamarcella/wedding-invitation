@@ -13,6 +13,7 @@ import {
   serverTimestamp,
   getDocs,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import {
   Copy,
@@ -132,12 +133,14 @@ ${config.brideFullName || config.brideName}
 &
 ${config.groomFullName || config.groomName}
 
-bermaksud mengundang ${guestName} untuk hadir serta memberikan doa restu pada hari bahagia kami tersebut. Kehadiran dan doa dari${guestName} sangat berarti, sebagai pelengkap kebahagiaan dan harapan untuk membangun keluarga yang sakinah, mawaddah, warahmah.
+bermaksud mengundang ${guestName} untuk hadir serta memberikan doa restu pada hari bahagia kami tersebut. Kehadiran dan doa dari keluarga besar kami ini sangat berarti, sebagai pelengkap kebahagiaan dan harapan untuk membangun keluarga yang sakinah, mawaddah, warahmah.
 
 Berikut link undangan lengkap yang dapat diakses untuk informasi detail waktu dan lokasi acara:
 
 🔗 Undangan:
 ${inviteLink}
+
+Dengan tulus kami memohon maaf apabila undangan ini hanya dapat kami sampaikan melalui pesan ini. Semoga silaturahmi kita senantiasa terjaga dan Allah SWT membalas segala kebaikanmu dengan limpahan keberkahan.
 
 Terima kasih atas perhatian, doa, dan waktu yang diberikan.
 
@@ -172,6 +175,18 @@ ${config.brideName} & ${config.groomName}`;
       return;
     }
     await deleteDoc(doc(db, "guests", slug));
+  };
+
+  const toggleFamilyStatus = async (guest: Guest) => {
+    const newFamilyStatus = !guest.isFamily;
+
+    try {
+      await updateDoc(doc(db, "guests", guest.slug), {
+        isFamily: newFamilyStatus,
+      });
+    } catch (error) {
+      console.error("Error updating family status:", error);
+    }
   };
 
   const copyInviteLink = (slug: string) => {
@@ -341,11 +356,20 @@ ${config.brideName} & ${config.groomName}`;
                         <h3 className="text-lg font-semibold text-gray-800">
                           {guest.name}
                         </h3>
-                        {guest.isFamily && (
-                          <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
-                            👨‍👩‍👧 Family
-                          </span>
-                        )}
+
+                        {/* Editable Family Toggle */}
+                        <button
+                          onClick={() => toggleFamilyStatus(guest)}
+                          className={`px-2 py-0.5 text-xs rounded-full font-medium cursor-pointer transition hover:opacity-80 ${
+                            guest.isFamily
+                              ? "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                              : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                          }`}
+                          title="Click to toggle family status"
+                        >
+                          {guest.isFamily ? "👨‍👩‍👧 Family" : "👤 Guest"}
+                        </button>
+
                         {hasResponded && (
                           <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium">
                             ✓ Responded ({guestResponses.length})
@@ -358,6 +382,11 @@ ${config.brideName} & ${config.groomName}`;
                           {guest.slug}
                         </code>
                       </p>
+                      {guest.isFamily && (
+                        <p className="text-xs text-purple-600 mt-1">
+                          ℹ️ Wedding gift section hidden for this guest
+                        </p>
+                      )}
                     </div>
                   </div>
 
