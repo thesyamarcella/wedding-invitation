@@ -12,8 +12,17 @@ import {
   orderBy,
   serverTimestamp,
   getDocs,
+  getDoc,
 } from "firebase/firestore";
-import { Copy, Check, Users, UserCheck, UserX, Calendar } from "lucide-react";
+import {
+  Copy,
+  Check,
+  Users,
+  UserCheck,
+  UserX,
+  Calendar,
+  MessageSquare,
+} from "lucide-react";
 
 function slugify(v: string) {
   return v.trim().toLowerCase().replace(/\s+/g, "-");
@@ -34,19 +43,41 @@ type GuestResponse = {
   createdAt: any;
 };
 
+type WeddingConfig = {
+  groomName: string;
+  brideName: string;
+  groomFullName?: string;
+  brideFullName?: string;
+  displayDate: string;
+  venueName: string;
+};
+
 export default function GuestList() {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [responses, setResponses] = useState<{
     [key: string]: GuestResponse[];
   }>({});
+  const [config, setConfig] = useState<WeddingConfig | null>(null);
   const [newName, setNewName] = useState("");
   const [isFamily, setIsFamily] = useState(false);
   const [loading, setLoading] = useState(true);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const [copiedTemplate, setCopiedTemplate] = useState<string | null>(null);
   const [expandedGuest, setExpandedGuest] = useState<string | null>(null);
 
+  // Load wedding config
   useEffect(() => {
-    // Fetch guests sorted by createdAt descending (newest first)
+    async function loadConfig() {
+      const ref = doc(db, "config", "wedding");
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        setConfig(snap.data() as WeddingConfig);
+      }
+    }
+    loadConfig();
+  }, []);
+
+  useEffect(() => {
     const guestsRef = collection(db, "guests");
     const q = query(guestsRef, orderBy("createdAt", "desc"));
 
@@ -58,7 +89,6 @@ export default function GuestList() {
 
       setGuests(list);
 
-      // Fetch RSVP responses for each guest
       const responsesData: { [key: string]: GuestResponse[] } = {};
 
       for (const guest of list) {
@@ -79,6 +109,45 @@ export default function GuestList() {
 
     return () => unsub();
   }, []);
+
+  const generateInvitationMessage = (guestName: string, slug: string) => {
+    if (!config) return "";
+
+    const baseUrl = window.location.origin;
+    const inviteLink = `${baseUrl}/invite/${slug}`;
+
+    return `Assalamu'alaikum Warahmatullahi Wabarakatuh
+
+Yth. ${guestName} yang dirahmati Allah SWT,
+
+Maha Suci Allah SWT dengan segala Kebesaran-Nya yang telah menciptakan makhluk-Nya berpasang-pasangan dan mempersatukan dua insan dalam ikatan suci pernikahan. Dengan penuh rasa syukur serta tanpa mengurangi rasa hormat, izinkan kami menyampaikan kabar bahagia ini.
+
+Alhamdulillah, insyaAllah pada:
+
+📅 Hari/Tanggal: ${config.displayDate}
+🕌 Acara: Walimatul 'Ursy (Resepsi Pernikahan)
+
+Kami,
+${config.brideFullName || config.brideName}
+&
+${config.groomFullName || config.groomName}
+
+bermaksud mengundang ${guestName} untuk hadir serta memberikan doa restu pada hari bahagia kami tersebut. Kehadiran dan doa dari keluarga besar kami ini sangat berarti, sebagai pelengkap kebahagiaan dan harapan untuk membangun keluarga yang sakinah, mawaddah, warahmah.
+
+Berikut link undangan lengkap yang dapat diakses untuk informasi detail waktu dan lokasi acara:
+
+🔗 Undangan:
+${inviteLink}
+
+Dengan tulus kami memohon maaf apabila undangan ini hanya dapat kami sampaikan melalui pesan ini. Semoga silaturahmi kita senantiasa terjaga dan Allah SWT membalas segala kebaikanmu dengan limpahan keberkahan.
+
+Terima kasih atas perhatian, doa, dan waktu yang diberikan.
+
+Wassalamu'alaikum Warahmatullahi Wabarakatuh
+
+Hormat kami,
+${config.brideName} & ${config.groomName}`;
+  };
 
   const handleAdd = async () => {
     if (!newName.trim()) return;
@@ -112,6 +181,13 @@ export default function GuestList() {
     navigator.clipboard.writeText(link);
     setCopiedSlug(slug);
     setTimeout(() => setCopiedSlug(null), 2000);
+  };
+
+  const copyTemplate = (guestName: string, slug: string) => {
+    const message = generateInvitationMessage(guestName, slug);
+    navigator.clipboard.writeText(message);
+    setCopiedTemplate(slug);
+    setTimeout(() => setCopiedTemplate(null), 2000);
   };
 
   const getAttendanceStats = () => {
@@ -260,11 +336,10 @@ export default function GuestList() {
                 key={guest.id}
                 className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition"
               >
-                {/* Guest Header */}
                 <div className="p-4">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="text-lg font-semibold text-gray-800">
                           {guest.name}
                         </h3>
@@ -286,54 +361,72 @@ export default function GuestList() {
                         </code>
                       </p>
                     </div>
+                  </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => copyInviteLink(guest.slug)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm"
-                      >
-                        {copiedSlug === guest.slug ? (
-                          <>
-                            <Check size={14} />
-                            Copied!
-                          </>
-                        ) : (
-                          <>
-                            <Copy size={14} />
-                            Copy Link
-                          </>
-                        )}
-                      </button>
-
-                      {hasResponded && (
-                        <button
-                          onClick={() =>
-                            setExpandedGuest(isExpanded ? null : guest.slug)
-                          }
-                          className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
-                        >
-                          {isExpanded ? "Hide" : "Show"} Responses
-                        </button>
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 flex-wrap mb-3">
+                    <button
+                      onClick={() => copyInviteLink(guest.slug)}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm"
+                    >
+                      {copiedSlug === guest.slug ? (
+                        <>
+                          <Check size={14} />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={14} />
+                          Copy Link
+                        </>
                       )}
+                    </button>
 
+                    <button
+                      onClick={() => copyTemplate(guest.name, guest.slug)}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm"
+                    >
+                      {copiedTemplate === guest.slug ? (
+                        <>
+                          <Check size={14} />
+                          Copied Message!
+                        </>
+                      ) : (
+                        <>
+                          <MessageSquare size={14} />
+                          Copy Template
+                        </>
+                      )}
+                    </button>
+
+                    {hasResponded && (
                       <button
-                        onClick={() => handleDelete(guest.slug)}
-                        className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm"
+                        onClick={() =>
+                          setExpandedGuest(isExpanded ? null : guest.slug)
+                        }
+                        className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
                       >
-                        Delete
+                        {isExpanded ? "Hide" : "Show"} Responses
                       </button>
-                    </div>
+                    )}
+
+                    <button
+                      onClick={() => handleDelete(guest.slug)}
+                      className="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm ml-auto"
+                    >
+                      Delete
+                    </button>
                   </div>
 
                   {/* Response Summary */}
                   {!hasResponded ? (
-                    <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
                       <p className="text-sm text-gray-600">
                         ⏳ No response yet
                       </p>
                     </div>
                   ) : (
-                    <div className="mt-3 flex gap-2">
+                    <div className="flex gap-2">
                       {guestResponses.filter((r) => r.willAttend === "yes")
                         .length > 0 && (
                         <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
