@@ -139,8 +139,6 @@ Berikut link undangan lengkap yang dapat diakses untuk informasi detail waktu da
 🔗 Undangan:
 ${inviteLink}
 
-Dengan tulus kami memohon maaf apabila undangan ini hanya dapat kami sampaikan melalui pesan ini. Semoga silaturahmi kita senantiasa terjaga dan Allah SWT membalas segala kebaikanmu dengan limpahan keberkahan.
-
 Terima kasih atas perhatian, doa, dan waktu yang diberikan.
 
 Wassalamu'alaikum Warahmatullahi Wabarakatuh
