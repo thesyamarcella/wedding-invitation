@@ -376,7 +376,7 @@ export default function InvitePage() {
       >
         <RsvpForm
           name={guestName}
-          setName={() => {}}
+          setName={setGuestName} // NEW - allows editing
           willAttend={willAttend}
           setWillAttend={setWillAttend}
           comment={comment}

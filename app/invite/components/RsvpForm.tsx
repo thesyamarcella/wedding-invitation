@@ -34,17 +34,22 @@ export const RsvpForm = ({
     );
   }
 
+  const handleSubmit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onSubmit(e as any);
+  };
+
   return (
     <>
       <h3 className="font-[var(--font-header)] text-3xl text-[var(--accent)] mb-3 text-center">
         RSVP 💌
       </h3>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-4 text-left">
-        {/* Name */}
+      <div className="flex flex-col gap-4 text-left">
+        {/* Editable Name Field */}
         <div>
           <label className="block text-sm mb-1 text-[var(--text)]/75">
-            Name
+            Your Name
           </label>
           <input
             className="
@@ -59,8 +64,12 @@ export const RsvpForm = ({
             "
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
+            placeholder="Enter your name"
+            required
           />
+          <p className="text-xs text-[var(--text)]/50 mt-1">
+            you can submit your own RSVP with your name
+          </p>
         </div>
 
         {/* Will Attend */}
@@ -127,7 +136,7 @@ export const RsvpForm = ({
 
         {/* Submit */}
         <button
-          type="submit"
+          onClick={handleSubmit}
           className="
             mt-2 w-full 
             bg-[var(--accent)] 
@@ -141,7 +150,7 @@ export const RsvpForm = ({
         >
           Send RSVP
         </button>
-      </form>
+      </div>
     </>
   );
 };
