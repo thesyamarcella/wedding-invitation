@@ -132,7 +132,7 @@ ${config.brideFullName || config.brideName}
 &
 ${config.groomFullName || config.groomName}
 
-bermaksud mengundang ${guestName} untuk hadir serta memberikan doa restu pada hari bahagia kami tersebut. Kehadiran dan doa dari keluarga besar kami ini sangat berarti, sebagai pelengkap kebahagiaan dan harapan untuk membangun keluarga yang sakinah, mawaddah, warahmah.
+bermaksud mengundang ${guestName} untuk hadir serta memberikan doa restu pada hari bahagia kami tersebut. Kehadiran dan doa dari${guestName} sangat berarti, sebagai pelengkap kebahagiaan dan harapan untuk membangun keluarga yang sakinah, mawaddah, warahmah.
 
 Berikut link undangan lengkap yang dapat diakses untuk informasi detail waktu dan lokasi acara:
 
